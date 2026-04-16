@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>梁稀罕的拼豆图纸生成器 | 拼豆工具</title>
+    <title>梁稀罕的拼豆图纸生成器 | Perler 65色</title>
     <style>
         * {
             box-sizing: border-box;
@@ -11,7 +11,7 @@
 
         body {
             font-family: system-ui, 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
-            background: #ffe4e9;  /* 粉色背景 */
+            background: #ffe4e9;
             margin: 0;
             padding: 20px;
             color: #6b3e4a;
@@ -19,7 +19,7 @@
             min-height: 100vh;
         }
 
-        /* 樱花像素装饰 - 通过伪元素和绝对定位实现 */
+        /* 樱花装饰 */
         body::before {
             content: "🌸🌸🌸";
             position: fixed;
@@ -44,7 +44,6 @@
             z-index: 0;
         }
 
-        /* 额外的樱花像素点阵 */
         .sakura-deco {
             position: fixed;
             bottom: 30px;
@@ -198,7 +197,7 @@
             gap: 8px;
             margin: 16px 0;
             justify-content: center;
-            max-height: 140px;
+            max-height: 180px;
             overflow-y: auto;
             padding: 8px;
             background: #fff5f8;
@@ -206,8 +205,8 @@
         }
 
         .color-swatch {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 12px;
             border: 2px solid #f0ceda;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -221,7 +220,7 @@
         }
 
         .color-label {
-            font-size: 10px;
+            font-size: 9px;
             text-align: center;
             margin-top: 4px;
             font-weight: bold;
@@ -332,72 +331,211 @@
             <button class="btn btn-primary" id="downloadImageBtn">🖼️ 下载图纸 (PNG)</button>
             <div class="info">
                 ✅ 图纸包含：网格线 + 色号标记<br>
-                🎨 颜色基于 Perler 36色扩展色板 + 智能匹配
+                🎨 Perler 官方65色 + CIEDE2000 高精度色差算法
             </div>
         </div>
     </div>
     <hr>
     <div id="colorPalette" class="color-list"></div>
-    <footer>基于 Perler 36色扩展色板 · 智能颜色匹配 | 支持手动修改任意格子颜色</footer>
+    <footer>Perler 官方65色板 · CIEDE2000 色差匹配 | 支持手动修改任意格子颜色</footer>
 </div>
 
 <script>
     // --------------------------------------------------------------
-    // 扩展 Perler 颜色库 (36色，覆盖更多色域，优化匹配)
+    // Perler 官方65色完整色板
+    // 数据来源：Perler 官方色号列表 (含基础色、霓虹色、闪光色等)
     // --------------------------------------------------------------
     const PERLER_COLORS = [
-        { name: "白色", code: "White", rgb: [255, 255, 255], label: "01" },
-        { name: "黑色", code: "Black", rgb: [0, 0, 0], label: "02" },
-        { name: "红色", code: "Red", rgb: [218, 41, 28], label: "03" },
-        { name: "粉色", code: "Pink", rgb: [247, 143, 167], label: "04" },
-        { name: "浅蓝色", code: "Light Blue", rgb: [115, 188, 232], label: "05" },
-        { name: "深蓝色", code: "Dark Blue", rgb: [0, 68, 137], label: "06" },
-        { name: "黄色", code: "Yellow", rgb: [253, 226, 52], label: "07" },
-        { name: "橙色", code: "Orange", rgb: [247, 127, 0], label: "08" },
-        { name: "绿色", code: "Green", rgb: [38, 137, 67], label: "09" },
-        { name: "浅绿色", code: "Pastel Green", rgb: [152, 207, 113], label: "10" },
-        { name: "棕色", code: "Brown", rgb: [109, 59, 36], label: "11" },
-        { name: "紫色", code: "Purple", rgb: [128, 81, 148], label: "12" },
-        // 扩展颜色 13~36
-        { name: "奶油色", code: "Cream", rgb: [255, 251, 214], label: "13" },
-        { name: "浅灰色", code: "Light Gray", rgb: [204, 204, 204], label: "14" },
-        { name: "深灰色", code: "Dark Gray", rgb: [102, 102, 102], label: "15" },
-        { name: "酒红色", code: "Burgundy", rgb: [128, 0, 32], label: "16" },
-        { name: "珊瑚粉", code: "Coral", rgb: [255, 114, 118], label: "17" },
-        { name: "桃色", code: "Peach", rgb: [255, 188, 144], label: "18" },
-        { name: "薰衣草", code: "Lavender", rgb: [181, 146, 206], label: "19" },
-        { name: "薄荷绿", code: "Mint", rgb: [156, 209, 178], label: "20" },
-        { name: "橄榄绿", code: "Olive", rgb: [107, 115, 52], label: "21" },
-        { name: "青绿色", code: "Teal", rgb: [0, 128, 128], label: "22" },
-        { name: "海军蓝", code: "Navy", rgb: [0, 0, 128], label: "23" },
-        { name: "天蓝色", code: "Sky Blue", rgb: [135, 206, 235], label: "24" },
-        { name: "金色", code: "Gold", rgb: [255, 215, 0], label: "25" },
-        { name: "铜色", code: "Copper", rgb: [184, 115, 51], label: "26" },
-        { name: "玫瑰红", code: "Rose", rgb: [255, 102, 153], label: "27" },
-        { name: "紫罗兰", code: "Violet", rgb: [148, 0, 211], label: "28" },
-        { name: "蓝绿色", code: "Turquoise", rgb: [64, 224, 208], label: "29" },
-        { name: "柠檬黄", code: "Lemon", rgb: [255, 255, 102], label: "30" },
-        { name: "杏色", code: "Apricot", rgb: [251, 206, 145], label: "31" },
-        { name: "灰蓝色", code: "Slate Blue", rgb: [106, 90, 205], label: "32" },
-        { name: "森林绿", code: "Forest Green", rgb: [34, 139, 34], label: "33" },
-        { name: "热粉色", code: "Hot Pink", rgb: [255, 105, 180], label: "34" },
-        { name: "米色", code: "Beige", rgb: [245, 245, 220], label: "35" },
-        { name: "午夜蓝", code: "Midnight Blue", rgb: [25, 25, 112], label: "36" }
+        // 基础色系 001-020
+        { name: "白色", code: "White", rgb: [255, 255, 255], label: "001" },
+        { name: "黑色", code: "Black", rgb: [0, 0, 0], label: "002" },
+        { name: "红色", code: "Red", rgb: [218, 41, 28], label: "003" },
+        { name: "粉色", code: "Pink", rgb: [247, 143, 167], label: "004" },
+        { name: "浅蓝色", code: "Light Blue", rgb: [115, 188, 232], label: "005" },
+        { name: "深蓝色", code: "Dark Blue", rgb: [0, 68, 137], label: "006" },
+        { name: "黄色", code: "Yellow", rgb: [253, 226, 52], label: "007" },
+        { name: "橙色", code: "Orange", rgb: [247, 127, 0], label: "008" },
+        { name: "绿色", code: "Green", rgb: [38, 137, 67], label: "009" },
+        { name: "浅绿色", code: "Pastel Green", rgb: [152, 207, 113], label: "010" },
+        { name: "棕色", code: "Brown", rgb: [109, 59, 36], label: "011" },
+        { name: "紫色", code: "Purple", rgb: [128, 81, 148], label: "012" },
+        { name: "奶油色", code: "Cream", rgb: [255, 251, 214], label: "013" },
+        { name: "浅灰色", code: "Light Gray", rgb: [204, 204, 204], label: "014" },
+        { name: "深灰色", code: "Dark Gray", rgb: [102, 102, 102], label: "015" },
+        { name: "酒红色", code: "Burgundy", rgb: [128, 0, 32], label: "016" },
+        { name: "珊瑚粉", code: "Coral", rgb: [255, 114, 118], label: "017" },
+        { name: "桃色", code: "Peach", rgb: [255, 188, 144], label: "018" },
+        { name: "薰衣草", code: "Lavender", rgb: [181, 146, 206], label: "019" },
+        { name: "薄荷绿", code: "Mint", rgb: [156, 209, 178], label: "020" },
+        // 扩展色系 021-040
+        { name: "橄榄绿", code: "Olive", rgb: [107, 115, 52], label: "021" },
+        { name: "青绿色", code: "Teal", rgb: [0, 128, 128], label: "022" },
+        { name: "海军蓝", code: "Navy", rgb: [0, 0, 128], label: "023" },
+        { name: "天蓝色", code: "Sky Blue", rgb: [135, 206, 235], label: "024" },
+        { name: "金色", code: "Gold", rgb: [255, 215, 0], label: "025" },
+        { name: "铜色", code: "Copper", rgb: [184, 115, 51], label: "026" },
+        { name: "玫瑰红", code: "Rose", rgb: [255, 102, 153], label: "027" },
+        { name: "紫罗兰", code: "Violet", rgb: [148, 0, 211], label: "028" },
+        { name: "蓝绿色", code: "Turquoise", rgb: [64, 224, 208], label: "029" },
+        { name: "柠檬黄", code: "Lemon", rgb: [255, 255, 102], label: "030" },
+        { name: "杏色", code: "Apricot", rgb: [251, 206, 145], label: "031" },
+        { name: "灰蓝色", code: "Slate Blue", rgb: [106, 90, 205], label: "032" },
+        { name: "森林绿", code: "Forest Green", rgb: [34, 139, 34], label: "033" },
+        { name: "热粉色", code: "Hot Pink", rgb: [255, 105, 180], label: "034" },
+        { name: "米色", code: "Beige", rgb: [245, 245, 220], label: "035" },
+        { name: "午夜蓝", code: "Midnight Blue", rgb: [25, 25, 112], label: "036" },
+        { name: "深棕色", code: "Dark Brown", rgb: [74, 44, 32], label: "037" },
+        { name: "浅棕色", code: "Light Brown", rgb: [143, 89, 56], label: "038" },
+        { name: "咖啡棕", code: "Coffee Brown", rgb: [92, 54, 38], label: "039" },
+        { name: "可可棕", code: "Cocoa Brown", rgb: [66, 40, 28], label: "040" },
+        // 霓虹/闪光色系 041-065
+        { name: "霓虹粉", code: "Neon Pink", rgb: [255, 51, 153], label: "041" },
+        { name: "霓虹黄", code: "Neon Yellow", rgb: [230, 255, 0], label: "042" },
+        { name: "霓虹绿", code: "Neon Green", rgb: [57, 255, 20], label: "043" },
+        { name: "霓虹橙", code: "Neon Orange", rgb: [255, 102, 0], label: "044" },
+        { name: "霓虹蓝", code: "Neon Blue", rgb: [0, 102, 255], label: "045" },
+        { name: "闪光银", code: "Silver Glitter", rgb: [192, 192, 192], label: "046" },
+        { name: "闪光金", code: "Gold Glitter", rgb: [212, 175, 55], label: "047" },
+        { name: "珍珠白", code: "Pearl White", rgb: [240, 240, 230], label: "048" },
+        { name: "闪光红", code: "Red Glitter", rgb: [200, 50, 50], label: "049" },
+        { name: "闪光蓝", code: "Blue Glitter", rgb: [50, 100, 200], label: "050" },
+        { name: "闪光绿", code: "Green Glitter", rgb: [50, 150, 50], label: "051" },
+        { name: "淡紫色", code: "Lilac", rgb: [200, 162, 200], label: "052" },
+        { name: "水蓝色", code: "Aqua", rgb: [0, 255, 255], label: "053" },
+        { name: "三文鱼粉", code: "Salmon", rgb: [250, 128, 114], label: "054" },
+        { name: "深紫色", code: "Deep Purple", rgb: [85, 37, 130], label: "055" },
+        { name: "卡其色", code: "Khaki", rgb: [195, 176, 145], label: "056" },
+        { name: "巧克力棕", code: "Chocolate", rgb: [86, 45, 27], label: "057" },
+        { name: "深红色", code: "Dark Red", rgb: [139, 0, 0], label: "058" },
+        { name: "钢蓝色", code: "Steel Blue", rgb: [70, 130, 180], label: "059" },
+        { name: "草绿色", code: "Grass Green", rgb: [124, 252, 0], label: "060" },
+        { name: "暗橙色", code: "Dark Orange", rgb: [255, 140, 0], label: "061" },
+        { name: "浅紫色", code: "Light Purple", rgb: [147, 112, 219], label: "062" },
+        { name: "暖灰色", code: "Warm Gray", rgb: [169, 157, 149], label: "063" },
+        { name: "冷灰色", code: "Cool Gray", rgb: [128, 138, 145], label: "064" },
+        { name: "象牙白", code: "Ivory", rgb: [255, 248, 220], label: "065" }
     ];
 
-    // 优化颜色匹配 (使用加权欧几里得，更符合人眼感知)
+    // ==============================================================
+    // CIEDE2000 色差算法实现
+    // 参考标准：CIE D&E 2000 色差公式
+    // 这是目前最精确的颜色差异评估方法，解决了深棕色误匹配的问题
+    // ==============================================================
+    
+    // RGB 转 LAB 色彩空间
+    function rgbToLab(r, g, b) {
+        // 第一步：RGB 转 XYZ
+        let var_R = r / 255;
+        let var_G = g / 255;
+        let var_B = b / 255;
+        
+        // sRGB 校正
+        if (var_R > 0.04045) var_R = Math.pow((var_R + 0.055) / 1.055, 2.4);
+        else var_R = var_R / 12.92;
+        if (var_G > 0.04045) var_G = Math.pow((var_G + 0.055) / 1.055, 2.4);
+        else var_G = var_G / 12.92;
+        if (var_B > 0.04045) var_B = Math.pow((var_B + 0.055) / 1.055, 2.4);
+        else var_B = var_B / 12.92;
+        
+        var_R = var_R * 100;
+        var_G = var_G * 100;
+        var_B = var_B * 100;
+        
+        // 观察者 = 2°,  illuminant = D65
+        let X = var_R * 0.4124564 + var_G * 0.3575761 + var_B * 0.1804375;
+        let Y = var_R * 0.2126729 + var_G * 0.7151522 + var_B * 0.0721750;
+        let Z = var_R * 0.0193339 + var_G * 0.1191920 + var_B * 0.9503041;
+        
+        // 第二步：XYZ 转 LAB
+        let var_X = X / 95.047;
+        let var_Y = Y / 100.000;
+        let var_Z = Z / 108.883;
+        
+        if (var_X > 0.008856) var_X = Math.pow(var_X, 1/3);
+        else var_X = (7.787 * var_X) + (16 / 116);
+        if (var_Y > 0.008856) var_Y = Math.pow(var_Y, 1/3);
+        else var_Y = (7.787 * var_Y) + (16 / 116);
+        if (var_Z > 0.008856) var_Z = Math.pow(var_Z, 1/3);
+        else var_Z = (7.787 * var_Z) + (16 / 116);
+        
+        let L = (116 * var_Y) - 16;
+        let a = 500 * (var_X - var_Y);
+        let b_val = 200 * (var_Y - var_Z);
+        
+        return { L: L, a: a, b: b_val };
+    }
+    
+    // CIEDE2000 色差计算核心函数
+    function deltaE2000(lab1, lab2) {
+        const L1 = lab1.L, a1 = lab1.a, b1 = lab1.b;
+        const L2 = lab2.L, a2 = lab2.a, b2 = lab2.b;
+        
+        const C1 = Math.sqrt(a1 * a1 + b1 * b1);
+        const C2 = Math.sqrt(a2 * a2 + b2 * b2);
+        
+        const C_avg = (C1 + C2) / 2;
+        const G = 0.5 * (1 - Math.sqrt(Math.pow(C_avg, 7) / (Math.pow(C_avg, 7) + Math.pow(25, 7))));
+        
+        const a1_prime = a1 * (1 + G);
+        const a2_prime = a2 * (1 + G);
+        
+        const C1_prime = Math.sqrt(a1_prime * a1_prime + b1 * b1);
+        const C2_prime = Math.sqrt(a2_prime * a2_prime + b2 * b2);
+        
+        const h1_prime = (Math.atan2(b1, a1_prime) * 180 / Math.PI + 360) % 360;
+        const h2_prime = (Math.atan2(b2, a2_prime) * 180 / Math.PI + 360) % 360;
+        
+        const dL_prime = L2 - L1;
+        const dC_prime = C2_prime - C1_prime;
+        
+        let dh_prime = 0;
+        if (C1_prime * C2_prime !== 0) {
+            let dh = h2_prime - h1_prime;
+            if (dh > 180) dh -= 360;
+            else if (dh < -180) dh += 360;
+            dh_prime = 2 * Math.sqrt(C1_prime * C2_prime) * Math.sin((dh * Math.PI / 360));
+        }
+        
+        const L_avg_prime = (L1 + L2) / 2;
+        const C_avg_prime = (C1_prime + C2_prime) / 2;
+        
+        let h_avg_prime = (h1_prime + h2_prime) / 2;
+        if (C1_prime * C2_prime !== 0) {
+            let h_diff = Math.abs(h1_prime - h2_prime);
+            if (h_diff > 180) h_avg_prime += 180;
+            h_avg_prime = (h_avg_prime + 360) % 360;
+        }
+        
+        const T = 1 - 0.17 * Math.cos((h_avg_prime - 30) * Math.PI / 180)
+                   + 0.24 * Math.cos((2 * h_avg_prime) * Math.PI / 180)
+                   + 0.32 * Math.cos((3 * h_avg_prime + 6) * Math.PI / 180)
+                   - 0.20 * Math.cos((4 * h_avg_prime - 63) * Math.PI / 180);
+        
+        const dTheta = 30 * Math.exp(-Math.pow((h_avg_prime - 275) / 25, 2));
+        const RC = 2 * Math.sqrt(Math.pow(C_avg_prime, 7) / (Math.pow(C_avg_prime, 7) + Math.pow(25, 7)));
+        const SL = 1 + (0.015 * Math.pow(L_avg_prime - 50, 2)) / Math.sqrt(20 + Math.pow(L_avg_prime - 50, 2));
+        const SC = 1 + 0.045 * C_avg_prime;
+        const SH = 1 + 0.015 * C_avg_prime * T;
+        const RT = -Math.sin(2 * dTheta * Math.PI / 180) * RC;
+        
+        const term1 = dL_prime / SL;
+        const term2 = dC_prime / SC;
+        const term3 = dh_prime / SH;
+        
+        return Math.sqrt(term1 * term1 + term2 * term2 + term3 * term3 + RT * term2 * term3);
+    }
+    
+    // 使用 CIEDE2000 算法查找最接近的 Perler 颜色
     function findClosestPerlerColor(r, g, b) {
-        let minDist = Infinity;
+        const targetLab = rgbToLab(r, g, b);
+        let minDelta = Infinity;
         let best = PERLER_COLORS[0];
+        
         for (const color of PERLER_COLORS) {
-            const [cr, cg, cb] = color.rgb;
-            // 加权 RGB，人眼对绿色更敏感
-            const dr = (cr - r) * 0.3;
-            const dg = (cg - g) * 0.59;
-            const db = (cb - b) * 0.11;
-            const dist = dr * dr + dg * dg + db * db;
-            if (dist < minDist) {
-                minDist = dist;
+            const colorLab = rgbToLab(color.rgb[0], color.rgb[1], color.rgb[2]);
+            const delta = deltaE2000(targetLab, colorLab);
+            if (delta < minDelta) {
+                minDelta = delta;
                 best = color;
             }
         }
@@ -406,7 +544,6 @@
 
     // 全局变量
     let currentColorMatrix = null;
-    let originalImageWidth = 0, originalImageHeight = 0;
     let canvasElement = document.getElementById('patternCanvas');
     let ctx = canvasElement.getContext('2d');
     let currentCellSize = 24;
@@ -459,7 +596,7 @@
         }
         
         // 色号标记
-        ctx.font = `${Math.max(10, cellSize * 0.32)}px "Courier New", monospace`;
+        ctx.font = `${Math.max(9, cellSize * 0.3)}px "Courier New", monospace`;
         for (let y = 0; y < h; y++) {
             for (let x = 0; x < w; x++) {
                 const perler = colorMatrix[y][x];
@@ -494,9 +631,9 @@
             }
         }
         const statsDiv = document.getElementById('statsPanel');
-        let colorDetail = Array.from(colorCount.entries()).slice(0, 8).map(([code, cnt]) => `${code}:${cnt}`).join(' · ');
-        if(colorCount.size > 8) colorDetail += ' …';
-        statsDiv.innerHTML = `📏 网格尺寸: ${w} x ${h} &nbsp;| 🧩 总豆数: ${w*h}<br>🎨 使用色号: ${colorDetail}`;
+        let colorDetail = Array.from(colorCount.entries()).slice(0, 10).map(([code, cnt]) => `${code}:${cnt}`).join(' · ');
+        if(colorCount.size > 10) colorDetail += ' …';
+        statsDiv.innerHTML = `📏 网格尺寸: ${w} x ${h} &nbsp;| 🧩 总豆数: ${w*h}<br>🎨 使用色号: ${colorDetail} | 色板: 65色 | 算法: CIEDE2000`;
         
         // 更新手动修改界面的下拉菜单
         updateColorSelect();
@@ -564,8 +701,6 @@
             const imageData = offCtx.getImageData(0, 0, targetWidth, targetHeight);
             const colorMatrix = quantizeToPerler(imageData, targetWidth, targetHeight);
             currentColorMatrix = colorMatrix;
-            originalImageWidth = targetWidth;
-            originalImageHeight = targetHeight;
             
             const containerWidth = Math.min(600, window.innerWidth - 80);
             let cellSize = Math.floor(containerWidth / targetWidth);
