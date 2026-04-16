@@ -1,11 +1,505 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <title>我的第一个网站</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拼豆图纸生成器 | Perler拼豆工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f5f0eb;
+            margin: 0;
+            padding: 20px;
+            color: #2c2c2c;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #3a2c29;
+        }
+
+        .sub {
+            text-align: center;
+            color: #7a6a64;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .tool-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+        }
+
+        .upload-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex: 1;
+            min-width: 260px;
+            max-width: 360px;
+        }
+
+        .preview-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex: 2;
+            min-width: 300px;
+        }
+
+        .upload-area {
+            border: 2px dashed #c9b9ae;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fefaf8;
+        }
+
+        .upload-area:hover {
+            border-color: #b97f5c;
+            background: #fff7f2;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: #7c5f4b;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+            margin-top: 16px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: #4a7c59;
+        }
+
+        .btn-primary:hover {
+            background: #3a6246;
+        }
+
+        .btn-download {
+            background: #2c5f8a;
+            margin-top: 20px;
+        }
+
+        .btn-download:hover {
+            background: #1e4665;
+        }
+
+        .info {
+            font-size: 0.85rem;
+            color: #8b6f5e;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2d6cf;
+        }
+
+        .color-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0;
+            justify-content: center;
+        }
+
+        .color-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .color-label {
+            font-size: 11px;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .stats {
+            background: #f0ebe6;
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        hr {
+            margin: 20px 0;
+            border: none;
+            border-top: 1px solid #e2d6cf;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.75rem;
+            color: #a58e7e;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 12px;
+            }
+            .tool-panel {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello, 世界！</h1>
-    <p>这是我的 GitHub Pages 网站。</p>
+<div class="container">
+    <h1>🧩 拼豆图纸生成器</h1>
+    <div class="sub">Perler 最少基础色 · 自动映射 + 网格图纸</div>
+
+    <div class="tool-panel">
+        <div class="upload-card">
+            <div class="upload-area" id="uploadArea">
+                📸 点击上传像素图片
+                <input type="file" id="fileInput" accept="image/png,image/jpeg,image/jpg,image/webp">
+                <div class="info">建议上传像素风 / 马赛克风格图片<br>自动缩放到合适尺寸</div>
+            </div>
+            <button class="btn" id="resetBtn">🧹 清空 / 重新上传</button>
+            <div class="stats" id="statsPanel">
+                ✨ 等待上传图片
+            </div>
+        </div>
+
+        <div class="preview-card">
+            <canvas id="patternCanvas" width="500" height="500" style="width:100%; height:auto; max-width:600px; margin:0 auto; display:block;"></canvas>
+            <button class="btn btn-download" id="downloadPdfBtn">📥 下载图纸 (PDF)</button>
+            <button class="btn btn-primary" id="downloadImageBtn">🖼️ 下载图纸 (PNG)</button>
+            <div class="info">
+                ✅ 图纸包含：网格线 + Perler色号标记<br>
+                🎨 颜色基于 Perler 最少基础色板 (12色)
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div id="colorPalette" class="color-list"></div>
+    <footer>基于 Perler 基础12色 · 自动将像素颜色映射到最接近的拼豆色号</footer>
+</div>
+
+<script>
+    // --------------------------------------------------------------
+    // 1. Perler 最少基础色 (12色) 名称 + RGB + 色号标识
+    // --------------------------------------------------------------
+    const PERLER_COLORS = [
+        { name: "白色", code: "White", rgb: [255, 255, 255], label: "01" },
+        { name: "黑色", code: "Black", rgb: [0, 0, 0], label: "02" },
+        { name: "红色", code: "Red", rgb: [218, 41, 28], label: "03" },
+        { name: "粉色", code: "Pink", rgb: [247, 143, 167], label: "04" },
+        { name: "浅蓝色", code: "Light Blue", rgb: [115, 188, 232], label: "05" },
+        { name: "深蓝色", code: "Dark Blue", rgb: [0, 68, 137], label: "06" },
+        { name: "黄色", code: "Yellow", rgb: [253, 226, 52], label: "07" },
+        { name: "橙色", code: "Orange", rgb: [247, 127, 0], label: "08" },
+        { name: "绿色", code: "Green", rgb: [38, 137, 67], label: "09" },
+        { name: "浅绿色", code: "Pastel Green", rgb: [152, 207, 113], label: "10" },
+        { name: "棕色", code: "Brown", rgb: [109, 59, 36], label: "11" },
+        { name: "紫色", code: "Purple", rgb: [128, 81, 148], label: "12" }
+    ];
+
+    // 预先计算RGB查找表 (欧几里得距离)
+    function findClosestPerlerColor(r, g, b) {
+        let minDist = Infinity;
+        let best = PERLER_COLORS[0];
+        for (const color of PERLER_COLORS) {
+            const [cr, cg, cb] = color.rgb;
+            const dr = cr - r;
+            const dg = cg - g;
+            const db = cb - b;
+            const dist = dr * dr + dg * dg + db * db;
+            if (dist < minDist) {
+                minDist = dist;
+                best = color;
+            }
+        }
+        return best;
+    }
+
+    // 将图片像素矩阵映射到 Perler 色板
+    function quantizeToPerler(imageData, width, height) {
+        const data = imageData.data;
+        const colorMatrix = Array(height).fill().map(() => Array(width).fill(null));
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const idx = (y * width + x) * 4;
+                const r = data[idx];
+                const g = data[idx + 1];
+                const b = data[idx + 2];
+                const perler = findClosestPerlerColor(r, g, b);
+                colorMatrix[y][x] = perler;
+            }
+        }
+        return colorMatrix;
+    }
+
+    // 绘制带网格 + 色号标记的图纸
+    function drawPattern(ctx, colorMatrix, cellSize, width, height) {
+        const w = width;
+        const h = height;
+        ctx.clearRect(0, 0, w * cellSize, h * cellSize);
+        
+        // 绘制每个像素的拼豆颜色
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const perler = colorMatrix[y][x];
+                const [r,g,b] = perler.rgb;
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                
+                // 添加浅浅的内阴影质感 (可选)
+                ctx.strokeStyle = "rgba(0,0,0,0.03)";
+                ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            }
+        }
+        
+        // 绘制网格线 (黑色细线)
+        ctx.beginPath();
+        ctx.strokeStyle = "#2c2c2c";
+        ctx.lineWidth = 1.2;
+        for (let y = 0; y <= h; y++) {
+            ctx.moveTo(0, y * cellSize);
+            ctx.lineTo(w * cellSize, y * cellSize);
+            ctx.stroke();
+        }
+        for (let x = 0; x <= w; x++) {
+            ctx.moveTo(x * cellSize, 0);
+            ctx.lineTo(x * cellSize, h * cellSize);
+            ctx.stroke();
+        }
+        
+        // 绘制色号标记 (小字号, 尽量居中)
+        ctx.font = `${Math.max(10, cellSize * 0.28)}px "Courier New", monospace`;
+        ctx.fillStyle = "#111";
+        ctx.shadowBlur = 0;
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const perler = colorMatrix[y][x];
+                const label = perler.label;
+                const centerX = x * cellSize + cellSize / 2;
+                const centerY = y * cellSize + cellSize / 2;
+                // 根据背景亮度决定文字颜色 (简单自适应)
+                const [r,g,b] = perler.rgb;
+                const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+                ctx.fillStyle = brightness > 140 ? "#1a1a1a" : "#f0f0f0";
+                ctx.fillText(label, centerX - ctx.measureText(label).width / 2, centerY + 4);
+            }
+        }
+        ctx.shadowColor = "transparent";
+    }
+    
+    // 生成并展示图纸
+    let currentColorMatrix = null;
+    let originalImageWidth = 0, originalImageHeight = 0;
+    let canvasElement = document.getElementById('patternCanvas');
+    let ctx = canvasElement.getContext('2d');
+    
+    function renderFromMatrix(colorMatrix, targetCanvas, cellSize = 24) {
+        const h = colorMatrix.length;
+        const w = colorMatrix[0].length;
+        targetCanvas.width = w * cellSize;
+        targetCanvas.height = h * cellSize;
+        const canvasCtx = targetCanvas.getContext('2d');
+        drawPattern(canvasCtx, colorMatrix, cellSize, w, h);
+        
+        // 更新统计信息
+        const colorCount = new Map();
+        for(let row of colorMatrix) {
+            for(let col of row) {
+                const key = col.code;
+                colorCount.set(key, (colorCount.get(key) || 0) + 1);
+            }
+        }
+        const statsDiv = document.getElementById('statsPanel');
+        let colorDetail = Array.from(colorCount.entries()).map(([code, cnt]) => `${code}:${cnt}`).join(' · ');
+        if(colorDetail.length > 80) colorDetail = colorDetail.slice(0, 80)+'…';
+        statsDiv.innerHTML = `📏 网格尺寸: ${w} x ${h} &nbsp;| 🧩 总豆数: ${w*h}<br>🎨 使用色号: ${colorDetail}`;
+    }
+    
+    // 处理上传图片
+    function processImage(file) {
+        if (!file) return;
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = function() {
+            URL.revokeObjectURL(url);
+            // 限制最大网格 48x48 保证可读性，但保持宽高比
+            let targetWidth = img.width;
+            let targetHeight = img.height;
+            const MAX_SIZE = 42;
+            if (targetWidth > MAX_SIZE && targetWidth >= targetHeight) {
+                targetHeight = Math.floor(targetHeight * (MAX_SIZE / targetWidth));
+                targetWidth = MAX_SIZE;
+            } else if (targetHeight > MAX_SIZE) {
+                targetWidth = Math.floor(targetWidth * (MAX_SIZE / targetHeight));
+                targetHeight = MAX_SIZE;
+            }
+            // 至少 1x1
+            targetWidth = Math.max(1, targetWidth);
+            targetHeight = Math.max(1, targetHeight);
+            
+            // 创建离屏canvas用于缩放
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = targetWidth;
+            offCanvas.height = targetHeight;
+            const offCtx = offCanvas.getContext('2d');
+            offCtx.drawImage(img, 0, 0, targetWidth, targetHeight);
+            const imageData = offCtx.getImageData(0, 0, targetWidth, targetHeight);
+            const colorMatrix = quantizeToPerler(imageData, targetWidth, targetHeight);
+            currentColorMatrix = colorMatrix;
+            originalImageWidth = targetWidth;
+            originalImageHeight = targetHeight;
+            
+            // 动态计算单元格大小 (让画布显示友好，最大宽度限制)
+            const containerWidth = Math.min(600, window.innerWidth - 80);
+            let cellSize = Math.floor(containerWidth / targetWidth);
+            cellSize = Math.min(32, Math.max(16, cellSize));
+            renderFromMatrix(colorMatrix, canvasElement, cellSize);
+        };
+        img.src = url;
+    }
+    
+    // 导出PDF (html2canvas + jspdf 轻量实现)
+    async function exportAsPDF() {
+        if (!currentColorMatrix) {
+            alert("请先上传一张图片生成拼豆图纸");
+            return;
+        }
+        // 为了高清PDF，临时使用较大cellSize渲染到一个新canvas
+        const exportCellSize = 28; // 更清晰
+        const w = currentColorMatrix[0].length;
+        const h = currentColorMatrix.length;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = w * exportCellSize;
+        tempCanvas.height = h * exportCellSize;
+        const tempCtx = tempCanvas.getContext('2d');
+        drawPattern(tempCtx, currentColorMatrix, exportCellSize, w, h);
+        
+        // 动态加载库
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) {
+            alert("正在加载PDF库，请稍后重试");
+            return;
+        }
+        const imgData = tempCanvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: w > h ? 'landscape' : 'portrait',
+            unit: 'mm',
+        });
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pdfWidth - 20;
+        const imgHeight = (tempCanvas.height / tempCanvas.width) * imgWidth;
+        let yOffset = 10;
+        if (imgHeight > pdfHeight - 20) {
+            // 缩放适应
+            pdf.addImage(imgData, 'PNG', 10, yOffset, imgWidth, pdfHeight - 20);
+        } else {
+            pdf.addImage(imgData, 'PNG', 10, yOffset, imgWidth, imgHeight);
+        }
+        pdf.save('perler_pattern.pdf');
+    }
+    
+    async function exportAsPNG() {
+        if (!currentColorMatrix) {
+            alert("请先上传图片生成图纸");
+            return;
+        }
+        const w = currentColorMatrix[0].length;
+        const h = currentColorMatrix.length;
+        const exportCellSize = 28;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = w * exportCellSize;
+        tempCanvas.height = h * exportCellSize;
+        const tempCtx = tempCanvas.getContext('2d');
+        drawPattern(tempCtx, currentColorMatrix, exportCellSize, w, h);
+        const link = document.createElement('a');
+        link.download = 'perler_pattern.png';
+        link.href = tempCanvas.toDataURL();
+        link.click();
+    }
+    
+    // UI绑定
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    uploadArea.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) processImage(e.target.files[0]);
+    });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        currentColorMatrix = null;
+        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasElement.width = 500;
+        canvasElement.height = 500;
+        ctx.fillStyle = "#f9f6f2";
+        ctx.fillRect(0, 0, 500, 500);
+        document.getElementById('statsPanel').innerHTML = '✨ 等待上传图片';
+        fileInput.value = '';
+    });
+    document.getElementById('downloadPdfBtn').addEventListener('click', exportAsPDF);
+    document.getElementById('downloadImageBtn').addEventListener('click', exportAsPNG);
+    
+    // 显示色板
+    const paletteDiv = document.getElementById('colorPalette');
+    PERLER_COLORS.forEach(c => {
+        const swatch = document.createElement('div');
+        swatch.style.textAlign = 'center';
+        swatch.style.margin = '0 4px';
+        swatch.innerHTML = `<div class="color-swatch" style="background:rgb(${c.rgb[0]},${c.rgb[1]},${c.rgb[2]})"></div>
+                            <div class="color-label">${c.label} ${c.name}</div>`;
+        paletteDiv.appendChild(swatch);
+    });
+    
+    // 初始化清空canvas
+    ctx.fillStyle = "#f9f6f2";
+    ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+    
+    // 动态加载jspdf库
+    function loadJSPDF() {
+        if (window.jspdf) return;
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        document.head.appendChild(script);
+    }
+    loadJSPDF();
+</script>
 </body>
 </html>
