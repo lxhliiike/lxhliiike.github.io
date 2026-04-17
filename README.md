@@ -1,4 +1,4 @@
-# 梁稀罕的拼豆图纸生成器
+# 梁熙涵的拼豆图纸生成器
 
 一个基于网页的拼豆图纸生成工具。用户上传像素图片后，系统自动将颜色匹配到 Perler 官方65色板，生成带网格线和色号标记的拼豆图纸，支持 PDF/PNG 下载，并支持手动修改任意格子的颜色。
 
@@ -24,4 +24,4 @@
    将本仓库所有文件下载到本地，或使用 Git 克隆：
 
    ```bash
-   git clone https://github.com/Ixhliiike/Ixhliiike.github.io.git
+   git clone https://github.com/lxhliike/lxhliike.github.io.git
